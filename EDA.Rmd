@@ -1,0 +1,510 @@
+---
+title: "EDA and Modeling of Health Data"
+author: "Ada Lazuli"
+date: '2022-06-20'
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Desktop/DATA630/assignment2/")
+library(ggplot2)
+
+outliers <- function(x) {
+  # Find the outliers  by filtering values less that 3 STD from the mean or 3 STD greater than the mean
+  min <- mean(x)  - 3 * sd(x) 
+  max <- mean(x) + 3 * sd(x)
+  
+  return(x[x < min | x > max])
+}
+
+```
+
+# Data Exploration Of [Heart Data](https://learn.umgc.edu/content/enforced/685926-027339-01-2225-GO1-9041/Dataset%20Descriptions/whas500.txt)
+
+## Initial Data Inspection
+
+```{r}
+df <- read.csv("whas500.csv")
+str(df)
+```
+
+The data consists of `r nrow(df)` observations, `r ncol(df)` variables, and exactly `r sum(is.na(df))` missing values.
+
+The id field can be dropped from the data set, as it does not provide useful information.
+
+```{r}
+df <- df[, -1]
+```
+
+Next, the admittance date, discharge date, and the follow up date can be removed 
+
+```{r}
+df <- df[, c(-15,-16,-17)]
+```
+
+Finally remove the length of hospital stay, total length of follow-up, and vital status at the last follow-up
+
+```{r}
+df <- df[, c(-15, -17, -18)]
+colnames(df)
+```
+
+### Age
+
+The age is a discrete quantitative variable that describes the age of the individual when they were admitted to the hospital.
+
+```{r}
+summary(df$age)
+ggplot(df, aes(x = age)) + geom_histogram() + geom_vline(aes(xintercept = mean(df$age)), color = "red")
+```
+
+There were `r length(outliers(df$age))` outliers found in the data for age.
+
+### gender
+
+The gender variable refers to the gender of the individual admitted to the hospital.
+```{r}
+print(table(df$gender))
+```
+
+###  hr (Initial Heart Rate)
+
+The initial heart rate of the individual admitted to the hospital
+
+```{r}
+
+summary(df$hr)
+ggplot(df, aes(x = hr)) + geom_histogram() + geom_vline(aes(xintercept = mean(df$hr)), color = "red")
+```
+
+There were `r length(outliers(df$hr))` outliers found in the data for hr. The outliers are `r outliers(df$hr)` for the initial heart rate.
+
+
+### sysbp (Systolic Blood Pressure)
+
+The Systolic Blood Pressure of the individual admitted to the hospital
+
+```{r}
+
+summary(df$sysbp)
+ggplot(df, aes(x = sysbp)) + geom_histogram() + geom_vline(aes(xintercept = mean(df$sysbp)), color = "red")
+```
+
+There were `r length(outliers(df$sysbp))` outliers found in the data for hr. The outliers are `r outliers(df$sysbp)` for the Systolic Blood Pressure.
+
+
+### diasbp (Diastolic Blood Pressure)
+
+The Diastolic Blood Pressure of the individual admitted to the hospital
+
+```{r}
+
+summary(df$diasbp)
+ggplot(df, aes(x = diasbp)) + geom_histogram() + geom_vline(aes(xintercept = mean(df$diasbp)), color = "red")
+```
+
+There were `r length(outliers(df$diasbp))` outliers found in the data for hr. The outliers are `r outliers(df$diasbp)` for the Diastolic Blood Pressure.
+
+
+### bmi 
+The BMI of the individual admitted to the hospital
+
+```{r}
+summary(df$bmi)
+ggplot(df, aes(x = bmi)) + geom_histogram() + geom_vline(aes(xintercept = mean(df$bmi)), color = "red")
+```
+
+There were `r length(outliers(df$bmi))` outliers found in the data for hr. The outliers are `r outliers(df$bmi)` for the BMI.
+
+
+### cvd
+
+The cvd variable refers to History of Cardiovascular Disease of the individual admitted to the hospital.
+```{r}
+print(table(df$cvd))
+```
+
+
+
+### afb
+
+The afb variable refers to Atrial Fibrillation of the individual admitted to the hospital.
+```{r}
+print(table(df$afb))
+```
+
+
+
+### sho
+
+The sho variable refers to Cardiogenic Shock of the individual admitted to the hospital.
+```{r}
+print(table(df$sho))
+```
+
+
+
+### chf
+
+The chf variable refers to Congestive Heart Complications of the individual admitted to the hospital.
+```{r}
+print(table(df$chf))
+```
+
+
+### av3
+
+The av3 variable refers to Complete Heart Block of the individual admitted to the hospital.
+```{r}
+print(table(df$av3))
+```
+
+
+
+### miord
+
+The miord variable refers to MI Order of the individual admitted to the hospital.
+```{r}
+print(table(df$miord))
+```
+
+
+### mitype
+
+The mitype variable refers to MI Type of the individual admitted to the hospital.
+```{r}
+print(table(df$mitype))
+```
+
+
+### year
+
+The year variable refers to Cohort Year of the individual admitted to the hospital.
+```{r}
+print(table(df$year))
+```
+
+
+
+### dstat
+
+The dstat variable refers to Discharge Status of the individual admitted to the hospital.
+```{r}
+print(table(df$dstat))
+```
+
+
+# Reviewing difference in collection groups
+
+The data was collected in 3 different time periods. This section compares those time periods for to determine if they are similar or not.
+
+
+### age
+
+```{r}
+ggplot(df, aes(x = age, fill = as.factor(year)))  + geom_density(alpha = 0.2) +  labs(x = "Age", y = "Percentage", fill = "Collection Year", title = "Density of Age") 
+```
+
+### gender
+
+```{r}
+ggplot(df, aes(x = gender, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Gender", y = "Occurrences", fill = "Year", title = "Comparison of Gender and Collection Year") 
+```
+
+### hr
+
+```{r}
+ggplot(df, aes(x = hr, fill = as.factor(year)))  + geom_density(alpha = 0.2) +  labs(x = "Heart Rate", y = "Percentage", fill = "Year", title = "Density of Heart Rate by Year") 
+```
+
+### sysbp
+
+```{r}
+ggplot(df, aes(x = sysbp, fill = as.factor(year)))  + geom_density(alpha = 0.2)+  labs(x = "Systolic Blood Pressure", y = "Percentage", fill = "Year", title = "Density of Systolic Blood Pressure by Year") 
+```
+
+### diasbp
+
+```{r}
+ggplot(df, aes(x = diasbp, fill = as.factor(year)))  + geom_density(alpha = 0.2) +  labs(x = "Diastolic Blood Pressure", y = "Percentage", fill = "Year", title = "Density of Diastolic Blood Pressure by Year") 
+```
+
+### bmi
+
+```{r}
+ggplot(df, aes(x = bmi, fill = as.factor(year)))  + geom_density(alpha = 0.2) +  labs(x = "Body Mass Index", y = "Percentage", fill = "Year", title = "Density of Body Mass Index by Year") 
+```
+
+### cvd
+
+```{r}
+ggplot(df, aes(x = cvd, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had CVD", y = "Occurrences", fill = "Year", title = "Comparison of CVD and Collection Year") 
+```
+
+### afb
+
+```{r}
+ggplot(df, aes(x = afb, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had AFB", y = "Occurrences", fill = "Year", title = "Comparison of AFB and Collection Year") 
+```
+
+### sho
+
+```{r}
+ggplot(df, aes(x = sho, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had SHO", y = "Occurrences", fill = "Year", title = "Comparison of SHO and Collection Year") 
+```
+
+### chf
+
+```{r}
+ggplot(df, aes(x = chf, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had CHF", y = "Occurrences", fill = "Year", title = "Comparison of CHF and Collection Year") 
+```
+
+### av3
+
+```{r}
+ggplot(df, aes(x = av3, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had AV3", y = "Occurrences", fill = "Year", title = "Comparison of AV3 and Collection Year") 
+```
+
+### miord
+
+```{r}
+ggplot(df, aes(x = miord, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") +   labs(x = "MI Order", y = "Occurrences", fill = "Year", title = "Comparison of MI Order and Collection Year") 
+```
+
+### mitype
+
+```{r}
+ggplot(df, aes(x = mitype, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") + labs(x = "MI Type", y = "Occurrences", fill = "Year", title = "Comparison of MI Type and Collection Year") 
+```
+
+### dstat
+
+```{r}
+ggplot(df, aes(x = dstat, fill = as.factor(year))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Deceased Discharge", y = "Occurrences", fill = "Year", title = "Comparison of Deceased Discharge and Collection Year") 
+```
+
+
+# Reviewing difference in Life and Death
+
+The data was collected in 3 different time periods. This section compares those time periods for to determine if they are similar or not.
+
+
+### age
+
+```{r}
+ggplot(df, aes(x = age, fill = as.factor(dstat)))  + geom_density(alpha = 0.2) +  labs(x = "Age", y = "Percentage", fill = "Deceased", title = "Density of Age") 
+```
+
+### gender
+
+```{r}
+ggplot(df, aes(x = gender, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Gender", y = "Occurrences", fill = "Deceased", title = "Comparison of Gender and Discharge Status") 
+```
+
+### hr
+
+```{r}
+ggplot(df, aes(x = hr, fill = as.factor(dstat)))  + geom_density(alpha = 0.2)  +  labs(x = "Heart Rate", y = "Percentage", fill = "Discharge Status", title = "Density of Heart Rate by Discharge Status") 
+```
+
+### sysbp
+
+```{r}
+ggplot(df, aes(x = sysbp, fill = as.factor(dstat)))  + geom_density(alpha = 0.2)  +  labs(x = "Systolic Blood Pressure", y = "Percentage", fill = "Discharge Status", title = "Density of Systolic Blood Pressure by Discharge Status") 
+```
+
+### diasbp
+
+```{r}
+ggplot(df, aes(x = diasbp, fill = as.factor(dstat)))  + geom_density(alpha = 0.2)  +  labs(x = "Diastolic Blood Pressure", y = "Percentage", fill = "Discharge Status", title = "Density of Diastolic Blood Pressure by Discharge Status") 
+```
+
+### bmi
+
+```{r}
+ggplot(df, aes(x = bmi, fill = as.factor(dstat)))  + geom_density(alpha = 0.2) +  labs(x = "Body Mass Index", y = "Percentage", fill = "Discharge Status", title = "Density of Body Mass Index by Discharge Status") 
+```
+
+### cvd
+
+```{r}
+ggplot(df, aes(x = cvd, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had CVD", y = "Occurrences", fill = "Deceased", title = "Comparison of CVD and Discharge Status") 
+```
+
+### afb
+
+```{r}
+ggplot(df, aes(x = afb, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had AFB", y = "Occurrences", fill = "Deceased", title = "Comparison of AFB and Discharge Status") 
+```
+
+### sho
+
+```{r}
+ggplot(df, aes(x = sho, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had SHO", y = "Occurrences", fill = "Deceased", title = "Comparison of SHO and Discharge Status") 
+```
+
+### chf
+
+```{r}
+ggplot(df, aes(x = chf, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had CHF", y = "Occurrences", fill = "Deceased", title = "Comparison of CHF and Discharge Status") 
+```
+
+### av3
+
+```{r}
+ggplot(df, aes(x = av3, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "Had AV3", y = "Occurrences", fill = "Deceased", title = "Comparison of AV3 and Discharge Status") 
+```
+
+### miord
+
+```{r}
+ggplot(df, aes(x = miord, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "MI Order", y = "Occurrences", fill = "Deceased", title = "Comparison of MI Order and Discharge Status") 
+```
+
+### mitype
+
+```{r}
+ggplot(df, aes(x = mitype, fill = as.factor(dstat))) + geom_bar(alpha = 0.4, position="dodge") +  labs(x = "MI Type", y = "Occurrences", fill = "Deceased", title = "Comparison of MI Type and Discharge Status") 
+```
+
+
+## Bi-Variate Analysis
+
+### Pearson test for Linearity
+
+```{r}
+# drop non numeric rows here
+sub <- cor(df[, c("age", 'bmi','sysbp','diasbp', 'hr')])
+round(sub, 2)
+```
+
+
+# Train Validate Test Split
+
+
+```{r}
+set.seed(101011) 
+ind <- sample(3, nrow(df), replace = TRUE, prob = c(0.6, 0.25, 0.15)) 
+train <- df[ind == 1, ]
+train.label <- train[, ncol(train)]
+
+validate <- df[ind == 2, ]
+validate.label <- validate[, ncol(validate)]
+
+test <- df[ind == 3, ]
+test.label <- test[, ncol(test)]
+print(table(ind))
+```
+
+
+
+# Logistic Regression
+
+
+## Model Creation
+
+
+### First attempt
+```{r}
+model <- glm(dstat ~ ., family = binomial, data = train)
+print(model)
+```
+
+Confusion Matrix For Training Data
+```{r}
+table(round(predict(model, train, type="response")), train.label)
+```
+Confusion Matrix For Validation Data
+
+```{r}
+table(round(predict(model, validate, type="response")), validate.label)
+```
+
+Analysis of Variance
+```{r}
+anova(model, test = "Chisq")
+```
+
+### Second Attempt
+
+```{r}
+
+#verify the data
+train <- df[ind == 1, ]
+validate <- df[ind == 2, ]
+test <- df[ind == 3, ]
+
+cols <- c('age', 'sysbp', 'sho', 'dstat')
+train <- train[, cols]
+validate <- validate[, cols]
+test <- test[, cols]
+model <- glm(dstat ~ ., family = binomial, data = train)
+print(model)
+```
+
+Evaluation on training data
+```{r}
+table(round(predict(model, train, type="response")), train.label)
+```
+Evaluation on validation data
+```{r}
+table(round(predict(model, validate, type="response")), validate.label)
+```
+
+Evaluation on test data
+```{r}
+table(round(predict(model, test, type="response")), test.label)
+```
+
+```{r}
+plot(predict(model),residuals(model), col=c("blue")) 
+
+lines(lowess(predict(model),residuals(model)), col=c("black"), lwd=2) 
+
+abline(h=0, col="grey") 
+```
+
+### Third Attempt
+
+```{r}
+#verify the data
+train <- df[ind == 1, ]
+validate <- df[ind == 2, ]
+test <- df[ind == 3, ]
+
+model <- glm(dstat ~ ., family = binomial, data = train)
+summary(step(model))
+```
+
+
+```{r}
+cols <- c('age', 'sysbp', 'sho', 'av3', 'hr' ,'dstat')
+
+train <- train[, cols]
+validate <- validate[, cols]
+
+model <- glm(dstat ~ ., family = binomial, data = train)
+print(model)
+```
+
+Confusion Matrix For Training Data
+```{r}
+table(round(predict(model, train, type="response")), train.label)
+```
+Confusion Matrix For Validation Data
+```{r}
+table(round(predict(model, validate, type="response")), validate.label)
+```
+
+# References
+
+Goldberg, R. (2001). Worcester Heart Attack Study. [CSV]. Retrieved from https://learn.umgc.edu/content/enforced/685926-027339-01-2225-GO1-9041/Dataset%20Descriptions/whas500.txt 
+
+Saraswat (2022). Practical Guide to Logistic Regression Analysis in R. Retrieved from https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/logistic-regression-analysis-r/tutorial/ 
+
+SparkR. (n.d.). GLM: Generalized Linear Models. Retrieved from https://www.rdocumentation.org/packages/SparkR/versions/2.1.2/topics/glm 
+
+Stats. (n.d.). Step Choose Model by AIC. Retrieved from https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/step 
